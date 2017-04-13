@@ -1,15 +1,6 @@
-import re
-
 import compilers
-
-
-first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-all_cap_re = re.compile('([a-z0-9])([A-Z])')
-
-
-def camel_to_snake(name):
-    s1 = first_cap_re.sub(r'\1_\2', name)
-    return all_cap_re.sub(r'\1_\2', s1).lower()
+from ordered_dict import OrderedDict
+from utils import camel_to_snake
 
 
 class Tree():
@@ -38,16 +29,24 @@ class Tree():
 
     def compile(self):
         print("...in compile() of ", self.name)
-        method = getattr(compilers, "compile_" + camel_to_snake(self.name))
+        method = getattr(compilers, "compile_" + self.name)
         if self.is_leaf():
             print("compiling", self.name)
             return method(node=self, compiled_children=None)
-        return method(
+        return str(method(
             node=self,
-            compiled_children="".join(
-                child.compile() for child in self.children()
+            compiled_children=OrderedDict(
+                (child.name, child.compile())
+                for child in self.children()
             )
-        )
+            # compiled_children={
+            #     child.name: child.compile()
+            #     for child in self.children()
+            # }
+            # compiled_children="".join(
+            #     child.compile() for child in self.children()
+            # )
+        ))
 
     # tree helpers
 

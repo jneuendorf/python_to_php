@@ -1,6 +1,7 @@
 import ast
 
 from tree import Tree
+from utils import camel_to_snake
 
 
 def dump(node, annotate_fields=True, include_attributes=False, indent='  '):
@@ -63,12 +64,12 @@ class TreeCreatorNodeVisitor():
 
     def create_tree(self, ast_node):
         return Tree(
-            name=node_name(ast_node),
+            name=camel_to_snake(node_name(ast_node)),
             ast_node=ast_node,
         )
 
     def visit(self, ast_node, tree_parent):
-        print("\n\nvisiting", node_name(ast_node))
+        print("\n\nvisiting", camel_to_snake(node_name(ast_node)))
         print(dump(ast_node, include_attributes=True))
         for field, value in ast.iter_fields(ast_node):
             if isinstance(value, list):
