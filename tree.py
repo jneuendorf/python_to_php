@@ -1,13 +1,14 @@
 import compilers
 from ordered_dict import OrderedDict
-from utils import camel_to_snake
+# from utils import camel_to_snake
 
 
 class Tree():
 
-    def __init__(self, name, ast_node, children=None):
+    def __init__(self, name, ast_node, field_name=None, children=None):
         self.name = name
         self.ast_node = ast_node
+        self.field_name = field_name
         if children is None:
             children = []
         self._parent = None
@@ -28,27 +29,28 @@ class Tree():
         return ("  " * self.level()) + self.name
 
     def compile(self):
-        print("...in compile() of ", self.name)
-        method = getattr(compilers, "compile_" + self.name)
-        if self.is_leaf():
-            print("compiling", self.name)
-            return method(node=self, compiled_children=None)
-        return str(method(
-            node=self,
-            compiled_children=OrderedDict(
-                (child.name, child.compile())
-                for child in self.children()
-            )
-            # compiled_children={
-            #     child.name: child.compile()
-            #     for child in self.children()
-            # }
-            # compiled_children="".join(
-            #     child.compile() for child in self.children()
-            # )
-        ))
+        print("...in compile() of ", self.name, self.field_name)
+        if self.name is not None:
+            method = getattr(compilers, "compile_" + self.name)
+            if self.is_leaf():
+                print("compiling", self.name)
+                return method(node=self, compiled_children=OrderedDict())
+            return str(method(
+                node=self,
+                compiled_children=OrderedDict(
+                    (child.name, child.compile())
+                    for child in self.children()
+                )
+            ))
+        # else:
+        # This instance is a pseudo node to increase hierarchy
+        # e.g. function_def -> body is a list of nodes
+        # so these nodes cannot be direct children of function_def.
+        # body itself is no ast node.
+        # In this case we return a list instead of a string.
+        return compilers.compile_list(self.children())
 
-    # tree helpers
+    # TREE HELPERS
 
     def children(self):
         return list(self._children)

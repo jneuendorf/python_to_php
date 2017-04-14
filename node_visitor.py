@@ -57,24 +57,34 @@ def node_name(node):
 ###############################################################################
 class TreeCreatorNodeVisitor():
 
-    def _visit(self, ast_node):
-        tree_node = self.create_tree(ast_node)
+    def _visit(self, field_name, ast_node):
+        tree_node = self.create_tree(field_name, ast_node)
         self.visit(ast_node, tree_node)
         return tree_node
 
-    def create_tree(self, ast_node):
+    def create_tree(self, field_name, ast_node):
         return Tree(
+            # name=camel_to_snake(field_name),
             name=camel_to_snake(node_name(ast_node)),
             ast_node=ast_node,
         )
 
     def visit(self, ast_node, tree_parent):
         print("\n\nvisiting", camel_to_snake(node_name(ast_node)))
-        print(dump(ast_node, include_attributes=True))
+        print(dump(ast_node, include_attributes=False))
         for field, value in ast.iter_fields(ast_node):
             if isinstance(value, list):
+                # insert a new level to represent the hierarchy
+                ast_node_list = Tree(
+                    name=None,
+                    field_name=field,
+                    ast_node=value
+                )
+                tree_parent.add_child(ast_node_list)
                 for item in value:
                     if isinstance(item, ast.AST):
-                        tree_parent.add_child(self._visit(item))
+                        ast_node_list.add_child(self._visit(field, item))
+                    else:
+                        print("non ast list item:", item)
             elif isinstance(value, ast.AST):
-                tree_parent.add_child(self._visit(value))
+                tree_parent.add_child(self._visit(field, value))
