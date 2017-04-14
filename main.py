@@ -13,7 +13,12 @@ if __name__ == "__main__":
             source = file.read()
             ast_tree = ast.parse(source)
             php = compilers.compile_all(ast_tree, filename)
-            print("===================")
+
+            print(
+                "\n"
+                "#############################################################"
+                "\n"
+            )
             print(php)
 
 

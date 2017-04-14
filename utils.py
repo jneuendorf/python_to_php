@@ -1,6 +1,7 @@
 import re
 
 
+# can be used in f-strings (because backslashes are not allowed)
 nl = "\n"
 
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
