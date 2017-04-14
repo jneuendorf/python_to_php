@@ -1,5 +1,7 @@
 import ast
 
+import compilers
+from ordered_dict import OrderedDict
 from tree import Tree
 from utils import camel_to_snake
 
@@ -50,41 +52,90 @@ def parseprint(code, filename="<string>", mode="exec", **kwargs):
     print(dump(node, **kwargs))
 
 
-def node_name(node):
-    return node.__class__.__name__
+def get_name(node):
+    return camel_to_snake(node.__class__.__name__)
 
 
 ###############################################################################
 class TreeCreatorNodeVisitor():
 
-    def _visit(self, field_name, ast_node):
-        tree_node = self.create_tree(field_name, ast_node)
-        self.visit(ast_node, tree_node)
-        return tree_node
+    # <<<<<<< Updated upstream
+    # def _visit(self, field_name, ast_node):
+    #     tree_node = self.create_tree(field_name, ast_node)
+    #     self.visit(ast_node, tree_node)
+    #     return tree_node
+    #
+    # def create_tree(self, field_name, ast_node):
+    #     return Tree(
+    #         # name=camel_to_snake(field_name),
+    #         name=camel_to_snake(node_name(ast_node)),
+    #         ast_node=ast_node,
+    #     )
+    #
+    # def visit(self, ast_node, tree_parent):
+    #     print("\n\nvisiting", camel_to_snake(node_name(ast_node)))
+    #     print(dump(ast_node, include_attributes=False))
+    #     for field, value in ast.iter_fields(ast_node):
+    #         if isinstance(value, list):
+    #             # insert a new level to represent the hierarchy
+    #             ast_node_list = Tree(
+    #                 name=None,
+    #                 field_name=field,
+    #                 ast_node=value
+    #             )
+    #             tree_parent.add_child(ast_node_list)
+    #             for item in value:
+    #                 if isinstance(item, ast.AST):
+    #                     ast_node_list.add_child(self._visit(field, item))
+    #                 else:
+    #                     print("non ast list item:", item)
+    #         elif isinstance(value, ast.AST):
+    #             tree_parent.add_child(self._visit(field, value))
+    # =======
 
-    def create_tree(self, field_name, ast_node):
-        return Tree(
-            # name=camel_to_snake(field_name),
-            name=camel_to_snake(node_name(ast_node)),
-            ast_node=ast_node,
-        )
+    # def _visit(self, ast_node):
+    #     tree_node = self.create_tree(ast_node)
+    #     self.visit(ast_node, tree_node)
+    #     return tree_node
+    #
+    # def create_tree(self, ast_node):
+    #     return Tree(
+    #         name=get_name(ast_node),
+    #         ast_node=ast_node,
+    #     )
 
-    def visit(self, ast_node, tree_parent):
-        print("\n\nvisiting", camel_to_snake(node_name(ast_node)))
+    # def visit(self, ast_node, tree_parent):
+    def visit(self, ast_node):
+        print("\n\nvisiting", get_name(ast_node))
         print(dump(ast_node, include_attributes=False))
+        compiled_children = OrderedDict()
         for field, value in ast.iter_fields(ast_node):
+            print("iterating:", get_name(ast_node), field)
             if isinstance(value, list):
-                # insert a new level to represent the hierarchy
-                ast_node_list = Tree(
-                    name=None,
-                    field_name=field,
-                    ast_node=value
-                )
-                tree_parent.add_child(ast_node_list)
-                for item in value:
-                    if isinstance(item, ast.AST):
-                        ast_node_list.add_child(self._visit(field, item))
-                    else:
-                        print("non ast list item:", item)
+                compiled_children[field] = [
+                    self.visit(item)
+                    for item in value
+                    if isinstance(item, ast.AST)
+                ]
+                # for item in value:
+                #     if isinstance(item, ast.AST):
+                #         # tree_parent.add_child(self._visit(item))
+                #         compile_func = getattr(
+                #             compilers,
+                #             "compile_" + get_name(item)
+                #         )
+                #         compile_func(
+                #             node=item,
+                #             compiled_children=OrderedDict(
+                #                 (child.name, child.compile())
+                #                 for child in self.children()
+                #             )
+                #         )
             elif isinstance(value, ast.AST):
-                tree_parent.add_child(self._visit(field, value))
+                # tree_parent.add_child(self._visit(value))
+                compiled_children[field] = self.visit(value)
+        compile_func = getattr(
+            compilers,
+            "compile_" + get_name(ast_node)
+        )
+        return compile_func(ast_node, compiled_children)
