@@ -58,7 +58,7 @@ def get_name(node):
 ###############################################################################
 class TreeCreatorNodeVisitor():
 
-    def visit(self, ast_node):
+    def visit(self, ast_node, compiled_children_by_node):
         print("\nvisiting", get_name(ast_node))
         # print(dump(ast_node, include_attributes=True))
         compiled_children = OrderedDict()
@@ -66,14 +66,18 @@ class TreeCreatorNodeVisitor():
             # print("iterating:", get_name(ast_node), field)
             if isinstance(value, list):
                 compiled_children[field] = [
-                    self.visit(item)
+                    self.visit(item, compiled_children_by_node)
                     for item in value
                     if isinstance(item, ast.AST)
                 ]
             elif isinstance(value, ast.AST):
-                compiled_children[field] = self.visit(value)
+                compiled_children[field] = self.visit(
+                    value,
+                    compiled_children_by_node
+                )
         compile_func = getattr(
             compilers,
             "compile_" + get_name(ast_node)
         )
+        compiled_children_by_node[ast_node] = compiled_children.copy()
         return compile_func(ast_node, compiled_children)

@@ -4,8 +4,13 @@ from ordered_dict import OrderedDict
 from node_visitor import TreeCreatorNodeVisitor
 from utils import nl, join
 
+from .storage import compiled_children_by_node
+
 from .arg import compile_arg
 from .load import compile_load
+from .literals import *
+from .tuple import *
+from .variables import *
 
 
 # For each field: Returns the compiled child or the field itself
@@ -35,16 +40,16 @@ def indent(node, more=0):
 def compile_all(ast, filename):
     print("compiling", filename)
     visitor = TreeCreatorNodeVisitor()
-    return visitor.visit(ast)
+    return visitor.visit(ast, compiled_children_by_node)
 
 
 def compile_module(node, compiled_children):
-    print("compile_module:", compiled_children["body"])
+    # print("compile_module:", compiled_children["body"])
     return join(nl, compiled_children["body"])
 
 
 def compile_function_def(node, compiled_children):
-    print("compile_function_def:", node._fields, compiled_children)
+    # print("compile_function_def:", node._fields, compiled_children)
     merged_fields = merge_plain_and_compiled_fields(
         node,
         compiled_children,
@@ -75,3 +80,7 @@ def compile_name(node, compiled_children):
 
 def compile_pass(node, compiled_children):
     return ""
+
+
+def compile_expr(node, compiled_children):
+    return f"({compiled_children['value']})"
