@@ -4,9 +4,10 @@ from ordered_dict import OrderedDict
 from node_visitor import TreeCreatorNodeVisitor
 from utils import nl, join
 
-from .storage import compiled_children_by_node
+from .helpers import compiled_children_by_node, indent
 
 from .arg import compile_arg
+from .comprehensions import *
 from .load import compile_load
 from .literals import *
 from .tuple import *
@@ -28,11 +29,6 @@ def merge_plain_and_compiled_fields(node, compiled_children):
         else:
             result.append(field)
     return result
-
-
-def indent(node, more=0):
-    more *= 4
-    return (node.col_offset * " ") + (more * " ")
 
 
 ###############################################################################
@@ -84,3 +80,10 @@ def compile_pass(node, compiled_children):
 
 def compile_expr(node, compiled_children):
     return f"({compiled_children['value']})"
+
+
+# True, False, None
+def compile_name_constant(node, compiled_children):
+    if node.value is not None:
+        return str(node.value)
+    return "null"

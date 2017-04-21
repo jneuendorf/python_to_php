@@ -1,5 +1,5 @@
 def compile_num(node, compiled_children):
-    print("compile_num:", compiled_children)
+    # print("compile_num:", compiled_children)
     if not isinstance(node.n, complex):
         return str(node.n)
     return f"__complex({node.n.real},{node.n.imag})"
