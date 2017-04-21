@@ -40,7 +40,6 @@ def comprehensions_to_for_loop(comprehensions, inner_expression, indentation="")
 #       but children in PHP.
 #       That can't be compiled that way by this function.
 def compile_comprehension(node, compiled_children):
-    # RESTRICTION: only tuples with 2 elements supported
     if isinstance(node.target, ast.Tuple):
         joined_tuple_items = '_'.join(
             # strip '$'
@@ -75,6 +74,7 @@ def compile_list_comp(node, compiled_children):
     # variables that must be made accessible in the function call
     top_level_iter = compiled_children['generators'][0]['iter']
 
+    # RESTRICTION: variables inside comprehensions cannot be accessed elsewhere
     func_call = (
         f"call_user_func(function($self, {top_level_iter}) {{" + "\n" +
         php + "\n" +
@@ -83,13 +83,28 @@ def compile_list_comp(node, compiled_children):
     return func_call
 
 
-# l = [True for row in table for cell in row]
-#
-# $__comprehension_result = array();
-# foreach ($table => $row) {
-#   foreach ($row => $cell) {
-#       array_push($__comprehension_result, True);
-#   }
-# }
-# $l = $__comprehension_result;
-# unset($__comprehension_result);
+def compile_set_comp(node, compiled_children):
+    return f"__set({compile_list_comp(node, compiled_children)})"
+
+
+def compile_dict_comp(node, compiled_children):
+    php = indent(node) + "$__comprehension_result = __dict();\n"
+    php += comprehensions_to_for_loop(
+        [
+            compiled_comprehension.values()
+            for compiled_comprehension in compiled_children["generators"]
+        ],
+        f"$__comprehension_result->put({compiled_children['key']}, {compiled_children['value']});",
+        indent(node)
+    )
+    php += "\n" + indent(node) + "return $__comprehension_result;"
+    # variables that must be made accessible in the function call
+    top_level_iter = compiled_children['generators'][0]['iter']
+
+    # RESTRICTION: variables inside comprehensions cannot be accessed elsewhere
+    func_call = (
+        f"call_user_func(function($self, {top_level_iter}) {{" + "\n" +
+        php + "\n" +
+        f"}}, $this, {top_level_iter})"
+    )
+    return func_call

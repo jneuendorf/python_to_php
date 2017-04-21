@@ -59,7 +59,7 @@ def get_name(node):
 class TreeCreatorNodeVisitor():
 
     def visit(self, ast_node, compiled_children_by_node):
-        # print(dump(ast_node, include_attributes=True))
+        print(dump(ast_node, include_attributes=True))
         compiled_children = OrderedDict()
         for field, value in ast.iter_fields(ast_node):
             # print("iterating:", get_name(ast_node), field)
