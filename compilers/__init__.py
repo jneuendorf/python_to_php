@@ -7,6 +7,7 @@ from utils import nl, join
 from .helpers import compiled_children_by_node, indent
 
 from .arg import compile_arg
+from .classes import *
 from .comprehensions import *
 from .load import compile_load
 from .literals import *
@@ -14,21 +15,65 @@ from .tuple import *
 from .variables import *
 
 
+###############################################################################
+# HELPERS
+def compile_function_definition(node, fields):
+    name, args, body, decorator_list, returns = fields.values()
+    return (
+        f"{indent(node)}function {name}({args}) {{{nl}"
+            f"{join(nl, body)}{nl}"
+        f"{indent(node)}}}"
+    )
+
+
+# class Sub extends Super {
+#     function get_a() {
+#         return $this->__get_a($this);
+#     }
+#
+#     function __get_a($self) {
+#         return $self->a;
+#     }
+# }
+def compile_method_definition(node, fields):
+    delegation_target = fields.copy()
+    delegation_target["name"] = f"__{fields['name']}"
+    # delegation_target["args"] = f"$self, {fields['args']}"
+
+    delegator = fields.copy()
+    # the python method has self as 1st arg -> strip "$self, " from start
+    delegation_target["args"] = fields['args'][7:]
+    if len(delegation_target["args"]) > 0:
+        delegation_target["args"] = f"$this, {delegation_target['args']}"
+    else:
+        delegation_target["args"] = "$this"
+    delegator["body"] = [
+        indent(node, 1) +
+        f"return $this->{delegation_target['name']}({delegation_target['args']});"
+    ]
+
+    return (
+        f"{compile_function_definition(node, delegator)}{nl * 2}"
+        f"{compile_function_definition(node, delegation_target)}"
+    )
+
+
 # For each field: Returns the compiled child or the field itself
 # (2nd case if the field was no ast node).
 # @param name_mapping [dict] map field name to ast node class name
 #   (e.g. for function_def: args -> arguments)
 def merge_plain_and_compiled_fields(node, compiled_children):
-    result = []
+    result = OrderedDict()
     # print("in merge_plain_and_compiled_fields......")
     # print(compiled_children)
     for name, field in ast.iter_fields(node):
         # print(name)
         if name in compiled_children:
-            result.append(compiled_children[name])
+            result[name] = compiled_children[name]
         else:
-            result.append(field)
+            result[name] = field
     return result
+
 
 
 ###############################################################################
@@ -44,19 +89,15 @@ def compile_module(node, compiled_children):
     return join(nl, compiled_children["body"])
 
 
-def compile_function_def(node, compiled_children):
-    # print("compile_function_def:", node._fields, compiled_children)
+def compile_function_def(node, compiled_children, ancestors):
     merged_fields = merge_plain_and_compiled_fields(
         node,
         compiled_children,
     )
-    print("merged_fields", merged_fields)
-    name, args, body, decorator_list, returns = merged_fields
-    return (
-        f"{indent(node)}function {name}({args}){{{nl}"
-            f"{join(nl, body)}{nl}"
-        f"{indent(node)}}}"
-    )
+    if len(ancestors) > 0 and isinstance(ancestors[0], ast.ClassDef):
+        return compile_method_definition(node, merged_fields)
+    else:
+        return compile_function_definition(node, merged_fields)
 
 
 def compile_arguments(node, compiled_children):
@@ -87,3 +128,8 @@ def compile_name_constant(node, compiled_children):
     if node.value is not None:
         return str(node.value)
     return "null"
+
+
+# Attribute access: b = a.prop (load), a.prop = 2 (store)
+def compile_attribute(node, compiled_children):
+    return f"{compiled_children['value']}->{node.attr}"

@@ -8,5 +8,3 @@
 
 # dictionary comprehensions
 d = {n: n for n in numbers}
-
-dic["key"]

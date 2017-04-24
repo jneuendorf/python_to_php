@@ -58,25 +58,40 @@ def get_name(node):
 ###############################################################################
 class TreeCreatorNodeVisitor():
 
-    def visit(self, ast_node, compiled_children_by_node):
+    def visit(self, ast_node, compiled_children_by_node, ancestors=None):
+        if ancestors is None:
+            ancestors = []
+
+        childs_ancestors = [ast_node] + ancestors
         print(dump(ast_node, include_attributes=True))
         compiled_children = OrderedDict()
         for field, value in ast.iter_fields(ast_node):
             # print("iterating:", get_name(ast_node), field)
             if isinstance(value, list):
                 compiled_children[field] = [
-                    self.visit(item, compiled_children_by_node)
+                    self.visit(item, compiled_children_by_node, childs_ancestors)
                     for item in value
                     if isinstance(item, ast.AST)
                 ]
             elif isinstance(value, ast.AST):
                 compiled_children[field] = self.visit(
                     value,
-                    compiled_children_by_node
+                    compiled_children_by_node,
+                    childs_ancestors
                 )
         compile_func = getattr(
             compilers,
             "compile_" + get_name(ast_node)
         )
         compiled_children_by_node[ast_node] = compiled_children.copy()
-        return compile_func(ast_node, compiled_children)
+
+        # `ancestors` argument is optional
+        try:
+            return compile_func(ast_node, compiled_children, ancestors)
+        except TypeError as e:
+            if str(e).startswith("compile_") and str(e).endswith("takes 2 positional arguments but 3 were given"):
+                return compile_func(ast_node, compiled_children)
+            else:
+                raise e
+        except Exception as e:
+            raise e

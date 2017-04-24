@@ -1,5 +1,6 @@
 import ast
 
+from .helpers import indent
 from .tuple import compile_tuple_unpack
 
 
@@ -19,7 +20,7 @@ def compile_assign(node, compiled_children):
         f"{target} = "
         for target in compiled_children['targets']
     )
-    return f"{targets}{compiled_children['value']};"
+    return f"{indent(node)}{targets}{compiled_children['value']};"
 
 
 def compile_delete(node, compiled_children):
