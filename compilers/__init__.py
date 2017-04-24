@@ -35,25 +35,29 @@ def compile_function_definition(node, fields):
 #         return $self->a;
 #     }
 # }
+# RESTRICTION: Convention to name first argument `self`.
 def compile_method_definition(node, fields):
     delegation_target = fields.copy()
     delegation_target["name"] = f"__{fields['name']}"
-    # delegation_target["args"] = f"$self, {fields['args']}"
-
-    delegator = fields.copy()
     # the python method has self as 1st arg -> strip "$self, " from start
     delegation_target["args"] = fields['args'][7:]
     if len(delegation_target["args"]) > 0:
-        delegation_target["args"] = f"$this, {delegation_target['args']}"
+        delegation_target["args"] = f"$self, {delegation_target['args']}"
     else:
-        delegation_target["args"] = "$this"
+        delegation_target["args"] = "$self"
+
+    delegator = fields.copy()
+    if delegator["name"] == "__init__":
+        delegator["name"] = "__construct"
+        delegation_target["name"] = f"__init__"
+    delegator["args"] = fields['args'][7:]
+    delegation_args = delegation_target['args'].replace('$self', '$this')
     delegator["body"] = [
         indent(node, 1) +
-        f"return $this->{delegation_target['name']}({delegation_target['args']});"
+        f"return $this->{delegation_target['name']}({delegation_args});"
     ]
-
     return (
-        f"{compile_function_definition(node, delegator)}{nl * 2}"
+        f"{compile_function_definition(node, delegator)}{nl}"
         f"{compile_function_definition(node, delegation_target)}"
     )
 

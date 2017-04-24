@@ -21,6 +21,6 @@ def compile_class_def(node, compiled_children):
     #         print(">>>", f)
     return (
         f"class {node.name}{extends} {{{nl}" +
-        "\n\n".join(compiled_children["body"]) + "\n"
+        f"{nl}{(nl * 2).join(compiled_children['body'])}{nl}"
         "}\n"
     )
