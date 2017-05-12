@@ -103,6 +103,10 @@ function set_attr($object, $name, $value) {
 //     def b():
 //         return 1
 // A.b = lambda: 2
+// $GLOBALS['A_b'] = function($self) {
+//     return 1;
+// };
+global $A_b;
 $A_b = function($self) {
     return 1;
 };
