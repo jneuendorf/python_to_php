@@ -1,0 +1,14 @@
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/jneuendorf/php_adt"
+        }
+    ],
+    "require": {
+        "jneuendorf/php_adt": ">=1.0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~5.7"
+    }
+}

@@ -92,6 +92,7 @@ class TreeCreatorNodeVisitor():
             if str(e).startswith("compile_") and str(e).endswith("takes 2 positional arguments but 3 were given"):
                 return compile_func(ast_node, compiled_children)
             else:
+                print("cannot handle error", str(e))
                 raise e
         except Exception as e:
             raise e
