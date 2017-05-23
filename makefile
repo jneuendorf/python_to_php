@@ -1,5 +1,4 @@
-PHP_TEST_SETUP_FILES = ./php/test/oop.php
 
 
 tests:
-	./vendor/phpunit/phpunit/phpunit --bootstrap $(PHP_TEST_SETUP_FILES) --no-globals-backup ./php/test/OopTest
+	./vendor/phpunit/phpunit/phpunit --bootstrap ./php/test/phpunit_bootstrap.php --no-globals-backup ./php/test
