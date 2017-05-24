@@ -18,8 +18,17 @@ function array_every($array, $predicate) {
     return True;
 }
 
-// ported from https://github.com/arximboldi/heterarchy/blob/master/heterarchy.litcoffee
+function array_filter_reindex($array, $callback) {
+    return array_values(array_filter($array, $callback));
+}
+
+// ported from https://github.com/arximboldi/heterarchy
 function c3_linearization($mros) {
+    // foreach ($mros as $mro) {
+    //     echo '['.implode(', ', array_map(function($cls) {
+    //         return $cls->__name__;
+    //     }, $mro)).']';
+    // }
     $result = [];
     while (count($mros) > 0) {
         $next = array_find(
@@ -35,9 +44,9 @@ function c3_linearization($mros) {
         if ($next === null) {
             throw new Exception('Inconsistent multiple inheritance', 1);
         }
-        $mros = array_filter(
+        $mros = array_filter_reindex(
             array_map(function($mro) use ($next) {
-                return array_filter($mro, function($cls) use ($next) {
+                return array_filter_reindex($mro, function($cls) use ($next) {
                     return $cls !== $next;
                 });
             }, $mros),
@@ -49,23 +58,3 @@ function c3_linearization($mros) {
     }
     return $result;
 }
-
-/*
-merge = function(inputs) {
-  var next, results;
-  results = [];
-  while (!isEmpty(inputs)) {
-    next = find(map(inputs, head), function(candidate) {
-      return every(inputs, function(input) {
-        return indexOf.call(tail(input), candidate) < 0;
-      });
-    });
-    assert(next != null, "Inconsistent multiple inheritance");
-    inputs = reject(map(inputs, function(lst) {
-      return without(lst, next);
-    }), isEmpty);
-    results.push(next);
-  }
-  return results;
-};
-*/

@@ -28,7 +28,7 @@ function __call_func($object, $method_name, ...$args) {
 }
 
 if (!class_exists('\TypeError')) {
-    class TypeError extends Exception {}
+    class TypeError extends \Exception {}
 }
 class AttributeError extends \Exception {}
 

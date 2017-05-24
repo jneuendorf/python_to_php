@@ -13,6 +13,9 @@ $object->__name__ = 'object';
 $object->__bases__ = [];
 $object->__is_class__ = True;
 $object->__is_metaclass__ = False;
+$object->__toString = function($self) {
+    return $self->__str__($self);
+};
 
 $type->__mro__ = [$type, $object];
 $type->__bases__ = [$object];
@@ -27,17 +30,15 @@ function __create_class($name, $bases, $dict, $metaclass) {
 
     $cls = new stdClass();
     $cls->__name__ = $name;
+    // auto insert object if no bases given
     $cls->__bases__ = $bases;
     $cls->__dict__ = $dict;
     $cls->__class__ = $metaclass;
-    // TODO: c3 linearization
-    // $cls->__mro__ = $bases;
-    // merge(map(bases, mro).concat([bases]))
     $cls->__mro__ = array_merge(
+        [$cls],
         c3_linearization(array_map(function($base) {
             return $base->__mro__;
-        }, $bases)),
-        $bases
+        }, $bases))
     );
     $cls->__is_class__ = True;
     $cls->__is_metaclass__ = False;
@@ -54,20 +55,6 @@ $type->__call__ = function($self, ...$args) {
     if ($n === 1) {
         $object = $args[0];
         return $object->__class__;
-        // if (is_object($object)) {
-        //     return $object->__class__;
-        // }
-        // // else: meta class -> php class -> string
-        // $metaclass = $object;
-        // var_dump($metaclass);
-        // // debug_print_backtrace();
-        // $mro = $metaclass::$__mro__;
-        // // count can't be 0
-        // if (count($mro) === 1) {
-        //     // == $mro[0]
-        //     return $mro[0];
-        // }
-        // return $mro[1];
     }
     // class type(name, bases, dict)
     else if ($n === 3) {
@@ -81,7 +68,6 @@ $type->__call__ = function($self, ...$args) {
 // convenience function for testing
 function type(...$args) {
     global $type;
-    // var_dump($args);
     return __call_func($type, '__call__', ...$args);
 }
 
