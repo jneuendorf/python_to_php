@@ -1,22 +1,5 @@
 <?php
 
-if (!function_exists('exception_error_handler')) {
-    function exception_error_handler($errno, $errstr, $errfile, $errline) {
-        throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
-    }
-    set_error_handler("exception_error_handler");
-}
-
-
-class AttributeError extends \Exception {}
-// class TypeError extends \Exception {}
-
-
-
-
-
-
-
 // All classes written in python inherit from this class
 // It is not part of the static `__mro__` attribute.
 abstract class __BaseClass {

@@ -1,5 +1,13 @@
 <?php
 
+if (!function_exists('exception_error_handler')) {
+    function exception_error_handler($errno, $errstr, $errfile, $errline) {
+        throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
+    }
+    set_error_handler("exception_error_handler");
+}
+
+
 // Generates a cross-platform path string from a path string of the form 'dir/subdir/file'.
 // Used for `require_once`.
 function xpath($dir, $path) {
@@ -17,4 +25,19 @@ function xpath($dir, $path) {
 // call a closure object attached to `$object` and set $self as first argument
 function __call_func($object, $method_name, ...$args) {
     return call_user_func($object->$method_name, $object, ...$args);
+}
+
+if (!class_exists('\TypeError')) {
+    class TypeError extends Exception {}
+}
+class AttributeError extends \Exception {}
+
+
+// https://stackoverflow.com/a/1320156/6928824
+function array_flatten(array $array) {
+    $flat = array();
+    array_walk_recursive($array, function($a) use (&$flat) {
+        $flat[] = $a;
+    });
+    return $flat;
 }

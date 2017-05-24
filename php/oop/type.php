@@ -3,30 +3,51 @@
 $type = new stdClass();
 $type->__class__ = $type;
 $type->__name__ = 'type';
+$type->__is_class__ = True;
+$type->__is_metaclass__ = True;
 
 $object = new stdClass();
 $object->__mro__ = [$object];
 $object->__class__ = $type;
 $object->__name__ = 'object';
 $object->__bases__ = [];
+$object->__is_class__ = True;
+$object->__is_metaclass__ = False;
 
 $type->__mro__ = [$type, $object];
 $type->__bases__ = [$object];
 
-// class type(name, bases, dict)
+// class type(name, bases, dict) or any metaclass
 function __create_class($name, $bases, $dict, $metaclass) {
+    global $object;
+
+    if (count($bases) === 0) {
+        $bases = [$object];
+    }
+
     $cls = new stdClass();
     $cls->__name__ = $name;
     $cls->__bases__ = $bases;
     $cls->__dict__ = $dict;
     $cls->__class__ = $metaclass;
+    // TODO: c3 linearization
+    // $cls->__mro__ = $bases;
+    // merge(map(bases, mro).concat([bases]))
+    $cls->__mro__ = array_merge(
+        c3_linearization(array_map(function($base) {
+            return $base->__mro__;
+        }, $bases)),
+        $bases
+    );
+    $cls->__is_class__ = True;
+    $cls->__is_metaclass__ = False;
     return $cls;
 }
 
 // constructor
 $type->__call__ = function($self, ...$args) {
-    var_dump($self);
-    var_dump($args);
+    // var_dump($self);
+    // var_dump($args);
 
     // class type(object)
     $n = count($args);
@@ -56,6 +77,14 @@ $type->__call__ = function($self, ...$args) {
         throw new TypeError('type() takes 1 or 3 arguments', 1);
     }
 };
+
+// convenience function for testing
+function type(...$args) {
+    global $type;
+    // var_dump($args);
+    return __call_func($type, '__call__', ...$args);
+}
+
 
 // var_dump($type);
 
