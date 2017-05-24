@@ -10,7 +10,7 @@ class TypeTest extends TestCase {
 
         assertEquals(type($type), $type);
         assertEquals(type($object), $type);
-
+        // special case
         assertTrue(isinstance($type, $type));
 
         assertTrue(issubclass($type, $object));
@@ -21,7 +21,7 @@ class TypeTest extends TestCase {
         global $type;
 
         $meta = type('Meta', [$type], dict());
-        assertTrue(isinstance($meta, $type));
+        assertTrue(issubclass($meta, $type));
     }
 
     public function testBasicClassCreation() {
