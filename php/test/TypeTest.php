@@ -17,6 +17,13 @@ class TypeTest extends TestCase {
         assertFalse(issubclass($object, $type));
     }
 
+    public function testMetaclassCreation() {
+        global $type;
+
+        $meta = type('Meta', [$type], dict());
+        assertTrue(isinstance($meta, $type));
+    }
+
     public function testBasicClassCreation() {
         global $object;
         global $type;
@@ -42,6 +49,7 @@ class TypeTest extends TestCase {
 
         assertEquals($C->__bases__, [$A, $B]);
         assertEquals($C->__mro__, [$C, $A, $B, $object]);
+        assertEquals($C->__class__, $type);
     }
 
     // public function testClassMetaClassRelations() {
