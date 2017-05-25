@@ -38,6 +38,10 @@ class TypeTest extends TestCase {
 
         assertTrue($A->__is_class__);
         assertFalse($A->__is_metaclass__);
+
+        assertTrue(isinstance($A, $type));
+        assertFalse(issubclass($A, $type));
+        assertTrue(issubclass($A, $object));
     }
 
     public function testAdvancedClassCreation() {
@@ -50,27 +54,10 @@ class TypeTest extends TestCase {
         assertEquals($C->__bases__, [$A, $B]);
         assertEquals($C->__mro__, [$C, $A, $B, $object]);
         assertEquals($C->__class__, $type);
+        // class A(metaclass=type): pass
+        // isinstance(A, type) -> True
+        // a = A()
+        // isinstance(a, type) -> False
     }
-
-    // public function testClassMetaClassRelations() {
-    //     global $object;
-    //     global $type;
-    //
-    //     // this is made sure in previous tests
-    //     $A = type('A', [], dict());
-    //     assertEquals(type($A), $type);
-    //
-    //     // TODO: move the following assertions to OopTest
-    //     assertTrue(isinstance($A, $type));
-    //
-    //     assertFalse(issubclass($A, $type));
-    //     assertTrue(issubclass($A, $object));
-    //
-    //
-    //     // class A(metaclass=type): pass
-    //     // isinstance(A, type) -> True
-    //     // a = A()
-    //     // isinstance(a, type) -> False
-    // }
 
 }
