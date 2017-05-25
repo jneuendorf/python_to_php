@@ -28,12 +28,13 @@ class TypeTest extends TestCase {
         global $object;
         global $type;
 
-        $A = type('A', [], dict());
+        $dict = dict(null, [1 => 2, '3' => False]);
+        $A = type('A', [], $dict);
 
         assertEquals($A->__name__, 'A');
         assertEquals($A->__bases__, [$object]);
         assertEquals($A->__mro__, [$A, $object]);
-        assertEquals($A->__dict__, dict());
+        assertEquals($A->__dict__, $dict);
         assertEquals($A->__class__, $type);
 
         assertTrue($A->__is_class__);
@@ -54,10 +55,19 @@ class TypeTest extends TestCase {
         assertEquals($C->__bases__, [$A, $B]);
         assertEquals($C->__mro__, [$C, $A, $B, $object]);
         assertEquals($C->__class__, $type);
-        // class A(metaclass=type): pass
-        // isinstance(A, type) -> True
-        // a = A()
-        // isinstance(a, type) -> False
     }
 
+    public function testBasicInstanceCreation() {
+        global $object;
+        global $type;
+        $A = type('A', [], dict());
+        $a = __create_instance($A);
+
+        assertTrue(isinstance($a, $A));
+        assertFalse(isinstance($a, $type));
+        assertEquals($a->__class__, $A);
+
+        assertFalse(is_class($a));
+        assertFalse(is_metaclass($a));
+    }
 }

@@ -20,6 +20,14 @@ $object->__toString = function($self) {
 $type->__mro__ = [$type, $object];
 $type->__bases__ = [$object];
 
+function __create_instance($cls) {
+    $obj = new stdClass();
+    $obj->__class__ = $cls;
+    $obj->__is_class__ = False;
+    $obj->__is_metaclass__ = False;
+    return $obj;
+}
+
 // class type(name, bases, dict) or any metaclass
 function __create_class($name, $bases, $dict, $metaclass) {
     global $object;
@@ -28,12 +36,11 @@ function __create_class($name, $bases, $dict, $metaclass) {
         $bases = [$object];
     }
 
-    $cls = new stdClass();
+    $cls = __create_instance($metaclass);
     $cls->__name__ = $name;
     // auto insert object if no bases given
     $cls->__bases__ = $bases;
     $cls->__dict__ = $dict;
-    $cls->__class__ = $metaclass;
     $cls->__mro__ = array_merge(
         [$cls],
         c3_linearization(array_map(function($base) {
@@ -41,7 +48,21 @@ function __create_class($name, $bases, $dict, $metaclass) {
         }, $bases))
     );
     $cls->__is_class__ = True;
-    $cls->__is_metaclass__ = False;
+
+    $cls->__call__ = function($self, ...$args) {
+        return $self->__new__($self, ...$args);
+    };
+    $cls->__new__ = function($self, ...$arguments) {
+        $obj = __create_instance($self);
+        if (isinstance($obj, $self)) {
+            // call the constructor compiled from python
+            $result = $obj->__init__(...$arguments);
+            if ($result !== None) {
+                throw new \TypeError('__init__() should return None, not \''.type($result).'\'', 1);
+            }
+        }
+        return $obj;
+    };
     return $cls;
 }
 
@@ -64,12 +85,6 @@ $type->__call__ = function($self, ...$args) {
         throw new TypeError('type() takes 1 or 3 arguments', 1);
     }
 };
-
-// convenience function for testing
-function type(...$args) {
-    global $type;
-    return __call_func($type, '__call__', ...$args);
-}
 
 
 // var_dump($type);

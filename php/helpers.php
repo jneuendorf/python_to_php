@@ -27,6 +27,17 @@ function __call_func($object, $method_name, ...$args) {
     return call_user_func($object->$method_name, $object, ...$args);
 }
 
+// convenience function for testing
+function type(...$args) {
+    global $type;
+    return __call_func($type, '__call__', ...$args);
+}
+
+// convenience function for testing
+function __new($cls, ...$args) {
+    return __call_func($cls, '__call__', ...$args);
+}
+
 if (!class_exists('\TypeError')) {
     class TypeError extends \Exception {}
 }
