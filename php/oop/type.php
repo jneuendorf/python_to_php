@@ -50,7 +50,7 @@ function __create_class($name, $bases, $dict, $metaclass) {
     $cls->__is_class__ = True;
 
     $cls->__call__ = function($self, ...$args) {
-        return $self->__new__($self, ...$args);
+        return __call_func($self, '__new__', ...$args);
     };
     $cls->__new__ = function($self, ...$arguments) {
         $obj = __create_instance($self);
@@ -63,8 +63,96 @@ function __create_class($name, $bases, $dict, $metaclass) {
         }
         return $obj;
     };
+    $cls->__getattribute__ = function($self, $name) {
+        $metaclass = $self->__class__;
+
+        if ($metaclass::$__dict__->has($name)) {
+            $attribute = $metaclass::$__dict__->get($name);
+            // Does Metaclass.__dict__ have a foobar item that is a data descriptor?
+            if ($attribute->__get__ and $attribute->__set__) {
+                return $attribute->__get__($self, $metaclass);
+            }
+        }
+
+        if ($self->__dict__->has($name)) {
+            $attribute = $self->__dict__->get($name);
+            // Does Class.__dict__ have a foobar item that is a descriptor (of any kind)?
+            if ($attribute->__get__) {
+                return $attribute->__get__(None, $self);
+            }
+            else {
+                return $attribute;
+            }
+        }
+
+        // Does Metaclass.__dict__ have a foobar item that is not a data descriptor?
+        if ($metaclass::$__dict__->has($name)) {
+            $attribute = $metaclass::$__dict__->get($name);
+            if ($attribute->__get__) {
+                return $attribute->__get__($self, $metaclass);
+            }
+            else {
+                return $attribute;
+            }
+        }
+        else {
+            return $metaclass::__getattr__($name);
+        }
+    };
     return $cls;
 }
+
+/*
+static PyObject* type_call(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+    PyObject *obj;
+
+    if (type->tp_new == NULL) {
+        PyErr_Format(PyExc_TypeError,
+                     "cannot create '%.100s' instances",
+                     type->tp_name);
+        return NULL;
+    }
+
+#ifdef Py_DEBUG
+    // type_call() must not be called with an exception set,
+    // because it can clear it (directly or indirectly) and so the
+    // caller loses its exception
+    assert(!PyErr_Occurred());
+#endif
+
+    obj = type->tp_new(type, args, kwds);
+    obj = _Py_CheckFunctionResult((PyObject*)type, obj, NULL);
+    if (obj == NULL)
+        return NULL;
+
+    // Ugly exception: when the call was type(something),
+    // don't call tp_init on the result.
+    if (type == &PyType_Type &&
+        PyTuple_Check(args) && PyTuple_GET_SIZE(args) == 1 &&
+        (kwds == NULL ||
+         (PyDict_Check(kwds) && PyDict_GET_SIZE(kwds) == 0)))
+        return obj;
+
+    // If the returned object is not an instance of type,
+    // it won't be initialized.
+    if (!PyType_IsSubtype(Py_TYPE(obj), type))
+        return obj;
+
+    type = Py_TYPE(obj);
+    if (type->tp_init != NULL) {
+        int res = type->tp_init(obj, args, kwds);
+        if (res < 0) {
+            assert(PyErr_Occurred());
+            Py_DECREF(obj);
+            obj = NULL;
+        }
+        else {
+            assert(!PyErr_Occurred());
+        }
+    }
+    return obj;
+}
+*/
 
 // constructor
 $type->__call__ = function($self, ...$args) {

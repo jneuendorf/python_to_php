@@ -61,9 +61,10 @@ class TypeTest extends TestCase {
         global $object;
         global $type;
         $A = type('A', [], dict());
-        $a = __create_instance($A);
+        $a = __new($A);
 
         assertTrue(isinstance($a, $A));
+        assertTrue(isinstance($a, $object));
         assertFalse(isinstance($a, $type));
         assertEquals($a->__class__, $A);
 

@@ -24,7 +24,7 @@ function xpath($dir, $path) {
 
 // call a closure object attached to `$object` and set $self as first argument
 function __call_func($object, $method_name, ...$args) {
-    return call_user_func($object->$method_name, $object, ...$args);
+    return call_user_func(getattr($object, $method_name), $object, ...$args);
 }
 
 // convenience function for testing

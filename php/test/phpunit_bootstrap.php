@@ -3,6 +3,7 @@
 require_once __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'helpers.php';
 
 
+require_once xpath(__DIR__, '../lookup/getattr.php');
 require_once xpath(__DIR__, '../oop/c3.php');
 require_once xpath(__DIR__, '../oop/type.php');
 require_once xpath(__DIR__, '../oop/oop.php');
